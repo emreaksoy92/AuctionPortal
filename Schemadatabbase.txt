@@ -1,0 +1,88 @@
+alter schema Money transfer [dbo].[tbBids]
+alter schema Money transfer [dbo].[Bill]
+alter schema Money transfer [dbo].[Order1]
+alter schema Customer transfer [dbo].[Winning]
+alter schema Item transfer [dbo].[tbItems]
+alter schema Item transfer [dbo].[ItemChosen]
+alter schema Item transfer [dbo].[ItemUnchsn]
+
+go
+CREATE PROCEDURE winning
+@First nchar(50)
+
+as 
+select ID,FirstName,LastName,Addr,Locat from Winning 
+where (FirstName=@First)
+go
+
+CREATE PROCEDURE CountofBids as
+
+SELECT    COUNT(OrderID) as CountofBids
+FROM       [Money].[Order1]
+go
+
+CREATE PROCEDURE CUSTOMERWINNING
+
+AS 
+
+SELECT FName,LName,Email,BDay,
+
+	(SELECT TOP 1 Addr from [Customer].[Winning] 
+	where [Customer].[Winning].ID=c.ID 
+	order by ID desc)
+	as ADRESS,
+
+     (SELECT     TOP 1 Locat
+                            FROM       [Customer].[Winning]  
+                            WHERE      [Customer].[Winning].ID = c.ID
+                            ORDER BY ID DESC) AS LOCATION
+
+From [Customer].[Customer] as c
+
+
+GO
+CREATE PROCEDURE SUMMAXPRICE AS
+
+SELECT     MAX(Item_Price) AS MAXPRICE
+INTO            #TEMP
+FROM         Item
+GROUP BY itemID
+
+SELECT SUM(MAXPRICE) FROM #TEMP
+GO
+
+go
+
+CREATE PROCEDURE MAXTAKENPRICE 
+AS 
+
+SELECT top 1 item_name,item_description from 
+
+[Item].[tbItems] as i join [Money].[tbBids] as b 
+
+on i.item_id=b.item_id
+ 
+
+order by   b.item_bidder desc 
+
+go
+
+create trigger hsasa
+
+on [Customer].[Customer]
+
+for insert 
+
+as 
+
+begin 
+
+declare @customerID int select @customerID=ID  from inserted 
+insert into [Customer].[Winning](ID,Locat) values (@customerID,0)
+
+end
+
+go
+
+
+
